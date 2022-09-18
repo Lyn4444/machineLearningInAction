@@ -22,6 +22,7 @@
 """
 
 from math import log
+import operator
 
 
 def calcShannonEnt(dataSet):
@@ -41,6 +42,26 @@ def calcShannonEnt(dataSet):
     return shannonEnt
 
 
+def chooseBestFeatureToSplit(dataSet):
+    numFeatures = len(dataSet[0]) - 1
+    baseEntropy = calcShannonEnt(dataSet)
+    bestInfoGain = 0.0
+    bestFeature = -1
+    for i in range(numFeatures):
+        featList = [example[i] for example in dataSet]
+        uniqueVals = set(featList)
+        newEntropy = 0.0
+        for value in uniqueVals:
+            subDataSet = splitDataSet(dataSet, i, value)
+            prob = len(subDataSet) / float(len(dataSet))
+            newEntropy += prob * calcShannonEnt(subDataSet)
+        infoGain = baseEntropy - newEntropy
+        if (infoGain > bestInfoGain):
+            bestInfoGain = infoGain
+            bestFeature = 1
+    return bestFeature
+
+
 def createDataSet():
     dataSet = [
         [1, 1, 'yes'],
@@ -53,7 +74,47 @@ def createDataSet():
     return dataSet, labels
 
 
+# 三个输⼊参数：待划分的数据集、划分数据集的 特征、需要返回的特征的值
+def splitDataSet(dataSet, axis, value):
+    retDataSet = []
+    for featVec in dataSet:
+        if featVec[axis] == value:
+            reduceFeatVec = featVec[:axis]
+            reduceFeatVec.extend(featVec[axis + 1:])
+            retDataSet.append(reduceFeatVec)
+    return retDataSet
+
+
+def majorityCnt(classList):
+    classCount = {}
+    for vote in classList:
+        if vote not in classCount.keys():
+            classCount[vote] = 0
+            classCount[vote] += 1
+            # 利用operator操作键值进行字典排序
+            sortedClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)
+        return sortedClassCount[0][0]
+
+
+def createTree(dataSet, labels):
+    classList = [example[-1] for example in dataSet]
+    if classList.count(classList[0]) == len(classList):
+        return classList[0]
+    if len(dataSet[0]) == 1:
+        return majorityCnt(classList)
+    bestFeat = chooseBestFeatureToSplit(dataSet)
+    bestFeatLabel = labels[bestFeat]
+    newTree = {bestFeatLabel: {}}
+    del(labels[bestFeat])
+    featValues = [example[bestFeat] for example in dataSet]
+    uniqueValues = set(featValues)
+    for value in uniqueValues:
+        subLabels = labels[:]
+        newTree[bestFeatLabel][value] = createTree(splitDataSet(dataSet, bestFeat, value), subLabels)
+    return newTree
+
+
 if __name__ == "__main__":
     dataSet, labels = createDataSet()
-    calcShannonEnt(dataSet)
-
+    shannonEnt = calcShannonEnt(dataSet)
+    print(shannonEnt)
