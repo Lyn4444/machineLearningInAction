@@ -19,10 +19,14 @@
 
     划分数据集的⼤原则是：将⽆序的数据变得更加有序。
 
+    对于过度划分的数据集，可以删掉部分不重要信息节点，如CART/ID3算法
+
 """
 
 from math import log
 import operator
+import TreePlotter
+import pickle
 
 
 def calcShannonEnt(dataSet):
@@ -120,15 +124,54 @@ def createTree(dataSet, labels):
     return newTree
 
 
+def classify(myTree, featLabels, testVec):
+    firstStr = list(myTree.keys())[0]
+    secondDict = myTree[firstStr]
+    featIndex = featLabels.index(firstStr)
+    for key in secondDict.keys():
+        # 将标签转便成索引
+        if testVec[featIndex] == key:
+            if type(secondDict[key]).__name__ == 'dict':
+                classLabel = classify(secondDict[key], featLabels, testVec)
+            else:
+                classLabel = secondDict[key]
+    return classLabel
+
+
+# 使用pickle模块存储决策树
+def storeTree(myTree, filename):
+    file = open(filename, 'wb')
+    pickle.dump(myTree, file)
+    file.close()
+
+
+def grabTree(filename):
+    file = open(filename, 'rb')
+    return pickle.load(file)
+
+
 if __name__ == "__main__":
-    dataSet, labels = createDataSet()
-    print(dataSet)
-    print(labels)
-    resDataSet = splitDataSet(dataSet, 0, 0)
-    print(resDataSet)
-    shannonEnt = calcShannonEnt(dataSet)
-    print(shannonEnt)
-    chooseDataSet = chooseBestFeatureToSplit(dataSet)
-    print(chooseDataSet)
-    myTree = createTree(dataSet, labels)
-    print(myTree)
+    # dataSet, labels = createDataSet()
+    # print(dataSet)
+    # print(labels)
+    # resDataSet = splitDataSet(dataSet, 0, 0)
+    # print(resDataSet)
+    # shannonEnt = calcShannonEnt(dataSet)
+    # print(shannonEnt)
+    # chooseDataSet = chooseBestFeatureToSplit(dataSet)
+    # print(chooseDataSet)
+    # myTree = createTree(dataSet, labels)
+    # print(myTree)
+    # myData, label = createDataSet()
+    # print(label)
+    # myTree = treePlotter.retrieveTree(0)
+    # print(classify(myTree, label, [1, 0]))
+    # print(classify(myTree, label, [1, 1]))
+    # storeTree(myTree, 'classifierStorage.txt')
+    # print(grabTree('classifierStorage.txt'))
+    file = open("lenses.txt")
+    lenses = [line.strip().split('\t') for line in file.readlines()]
+    lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
+    lensesTree = createTree(lenses, lensesLabels)
+    print(lensesTree)
+    treePlotter.createPlot(lensesTree)

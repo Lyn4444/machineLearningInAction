@@ -4,6 +4,7 @@ the code of machine Learning In Action
 ## Content
 
 ### ch1 KNN
-### ch2 Decision Tree
+### ch2 Decision Tree(shannonEntropy)
+### ch3 Bayes
 
 
