@@ -33,8 +33,8 @@ def calcShannonEnt(dataSet):
         currentLabel = featVec[-1]
         if currentLabel not in labelCounts.keys():
             labelCounts[currentLabel] = 0
-            labelCounts[currentLabel] += 1
-    shannonEnt = 0.0
+        labelCounts[currentLabel] += 1
+        shannonEnt = 0.0
     for key in labelCounts:
         prob = float(labelCounts[key]) / numEntries
         # 以2为底求对数
@@ -48,17 +48,20 @@ def chooseBestFeatureToSplit(dataSet):
     bestInfoGain = 0.0
     bestFeature = -1
     for i in range(numFeatures):
+        # 创建唯一的分类标签列表
         featList = [example[i] for example in dataSet]
         uniqueVals = set(featList)
         newEntropy = 0.0
+        # 计算每种划分方式的信息熵
         for value in uniqueVals:
             subDataSet = splitDataSet(dataSet, i, value)
             prob = len(subDataSet) / float(len(dataSet))
             newEntropy += prob * calcShannonEnt(subDataSet)
         infoGain = baseEntropy - newEntropy
-        if (infoGain > bestInfoGain):
+        if infoGain > bestInfoGain:
+            # 计算最好的信息熵
             bestInfoGain = infoGain
-            bestFeature = 1
+            bestFeature = i
     return bestFeature
 
 
@@ -98,14 +101,17 @@ def majorityCnt(classList):
 
 def createTree(dataSet, labels):
     classList = [example[-1] for example in dataSet]
+    # 类别相同则停止划分
     if classList.count(classList[0]) == len(classList):
         return classList[0]
+    # 遍历返回出现最多次数的特征值
     if len(dataSet[0]) == 1:
         return majorityCnt(classList)
     bestFeat = chooseBestFeatureToSplit(dataSet)
     bestFeatLabel = labels[bestFeat]
     newTree = {bestFeatLabel: {}}
-    del(labels[bestFeat])
+    # 得到列表中包含的属性值
+    del (labels[bestFeat])
     featValues = [example[bestFeat] for example in dataSet]
     uniqueValues = set(featValues)
     for value in uniqueValues:
@@ -116,5 +122,13 @@ def createTree(dataSet, labels):
 
 if __name__ == "__main__":
     dataSet, labels = createDataSet()
+    print(dataSet)
+    print(labels)
+    resDataSet = splitDataSet(dataSet, 0, 0)
+    print(resDataSet)
     shannonEnt = calcShannonEnt(dataSet)
     print(shannonEnt)
+    chooseDataSet = chooseBestFeatureToSplit(dataSet)
+    print(chooseDataSet)
+    myTree = createTree(dataSet, labels)
+    print(myTree)
