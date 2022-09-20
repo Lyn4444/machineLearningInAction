@@ -151,8 +151,8 @@ def grabTree(filename):
 
 
 if __name__ == "__main__":
-    # dataSet, labels = createDataSet()
-    # print(dataSet)
+    dataSet, labels = createDataSet()
+    print(dataSet)
     # print(labels)
     # resDataSet = splitDataSet(dataSet, 0, 0)
     # print(resDataSet)
@@ -169,9 +169,9 @@ if __name__ == "__main__":
     # print(classify(myTree, label, [1, 1]))
     # storeTree(myTree, 'classifierStorage.txt')
     # print(grabTree('classifierStorage.txt'))
-    file = open("lenses.txt")
-    lenses = [line.strip().split('\t') for line in file.readlines()]
-    lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
-    lensesTree = createTree(lenses, lensesLabels)
-    print(lensesTree)
-    treePlotter.createPlot(lensesTree)
+    # file = open("lenses.txt")
+    # lenses = [line.strip().split('\t') for line in file.readlines()]
+    # lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
+    # lensesTree = createTree(lenses, lensesLabels)
+    # print(lensesTree)
+    # TreePlotter.createPlot(lensesTree)
