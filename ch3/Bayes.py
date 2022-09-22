@@ -59,18 +59,75 @@ def setOfWordsToVec(vocabList, inputSet):
             print(word + "----- not in vocabulary")
     return returnVec
 
-def trainNB0(trainMatrix, trainCategory):
-    numTrainDocs = len(trainMatrix)
-    numWords = len(trainMatrix[0])
-    pAbusive = sum(trainCategory) / float(numWords)
-    # 初始化概率
-    p0Num = np.zeros(numWords)
-    p1Num = np.zeros(numWords)
 
+# 朴素贝叶斯分类器训练函数
+# trainCategory 每篇文档中词语的标签构成的向量
+# 0 非侮辱 1 侮辱 （每个句子的标签）
+# P(c|w) = P(w|c)P(c) / P(w)
+def trainNB0(trainMatrix, trainCategory):
+    # 行
+    numTrainDocs = len(trainMatrix)
+    # 列
+    numWords = len(trainMatrix[0])
+    # 侮辱词语的频率
+    pAbusive = sum(trainCategory) / float(numTrainDocs)
+    # 初始化概率,根据实际情况来拉普拉斯平滑化
+    p0Num = np.ones(numWords)
+    p1Num = np.ones(numWords)
+    p0Denom = 2.0
+    p1Denom = 2.0
+    for i in range(numTrainDocs):
+        if trainCategory[i] == 1:
+            # 向量相加
+            p1Num += trainMatrix[i]
+            p1Denom += sum(trainMatrix[i])
+        else:
+            p0Num += trainMatrix[i]
+            p0Denom += sum(trainMatrix[i])
+    # 对每个元素做除法
+    # 防止遇到的下溢出问题（这是由于太多很小的数相乘造成的），解决方法： 对乘积取自然对数 ln(a*b) = ln(a) + ln(b)
+    p1Vect = np.log(p1Num / p1Denom)
+    p0Vect = np.log(p0Num / p0Denom)
+    return p0Vect, p1Vect, pAbusive
+
+
+# 朴素贝叶斯分类器分类函数
+def classifyNB(vecToClassify, p0Vec, p1Vec, pClass1):
+    p1 = sum(vecToClassify * p1Vec) + np.log(pClass1)
+    p0 = sum(vecToClassify * p0Vec) + np.log(1.0 - pClass1)
+    if p1 > p0:
+        return 1
+    else:
+        return 0
+
+
+# 朴素贝叶斯分类器测试函数
+def testingNB():
+    listOPosts, listClass = loadDataSet()
+    myVocabList = createVocabList(listOPosts)
+    trainMat = []
+    for positionDoc in listOPosts:
+        trainMat.append(setOfWordsToVec(myVocabList, positionDoc))
+    p0V, p1V, pAb = trainNB0(np.array(trainMat), np.array(listClass))
+    testEntry = ['love', 'my', 'dalmation']
+    thisDoc = np.array(setOfWordsToVec(myVocabList, testEntry))
+    print(str(testEntry) + ' classified as: ' + str(classifyNB(thisDoc, p0V, p1V, pAb)))
+    testEntry = ['stupid', 'garbage']
+    thisDoc = np.array(setOfWordsToVec(myVocabList, testEntry))
+    print(str(testEntry) + ' classified as: ' + str(classifyNB(thisDoc, p0V, p1V, pAb)))
 
 
 if __name__ == "__main__":
-    listPosts, listClass = loadDataSet()
-    myVocabList = createVocabList(listPosts)
+    # listPosts, listClass = loadDataSet()
+    # myVocabList = createVocabList(listPosts)+
     # print(myVocabList)
-    # print(setOfWordsToVec(myVocabList, listPosts[0]))
+    # # print(setOfWordsToVec(myVocabList, listPosts[0]))
+    # trainMat = []
+    # for postInDoc in listPosts:
+    #     trainMat.append(setOfWordsToVec(myVocabList, postInDoc))
+    # print(trainMat)
+    # p0V, p1V, pAb = trainNB0(trainMat, listClass)
+    # print(p0V)
+    # print(p1V)
+    # print(pAb)
+    testingNB()
