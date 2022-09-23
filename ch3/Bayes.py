@@ -289,26 +289,26 @@ def getTopWord(ny, sf):
 
 
 if __name__ == "__main__":
-# listPosts, listClass = loadDataSet()
-# myVocabList = createVocabList(listPosts)+
-# print(myVocabList)
-# # print(setOfWordsToVec(myVocabList, listPosts[0]))
-# trainMat = []
-# for postInDoc in listPosts:
-#     trainMat.append(setOfWordsToVec(myVocabList, postInDoc))
-# print(trainMat)
-# p0V, p1V, pAb = trainNB0(trainMat, listClass)
-# print(p0V)
-# print(p1V)
-# print(pAb)
-# testingNB()
-# spamTest()
-# ny = feedparser.parse('http://www.nasa.gov/rss/dyn/image_of_the_day.rss')
-# 没有找到这个的替换RSS源
-# sf = feedparser.parse('')
-# print(ny)
-# print(sf)
-# vocabList, pSF, pNY = localWords(ny, sf)
-# print(vocabList)
-# print(pNY)
-# print(pSF)
+    # listPosts, listClass = loadDataSet()
+    # myVocabList = createVocabList(listPosts)+
+    # print(myVocabList)
+    # # print(setOfWordsToVec(myVocabList, listPosts[0]))
+    # trainMat = []
+    # for postInDoc in listPosts:
+    #     trainMat.append(setOfWordsToVec(myVocabList, postInDoc))
+    # print(trainMat)
+    # p0V, p1V, pAb = trainNB0(trainMat, listClass)
+    # print(p0V)
+    # print(p1V)
+    # print(pAb)
+    # testingNB()
+    # spamTest()
+    ny = feedparser.parse('http://www.nasa.gov/rss/dyn/image_of_the_day.rss')
+    # 没有找到这个的替换RSS源
+    sf = feedparser.parse('')
+    print(ny)
+    print(sf)
+    vocabList, pSF, pNY = localWords(ny, sf)
+    print(vocabList)
+    print(pNY)
+    print(pSF)
