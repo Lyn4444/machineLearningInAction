@@ -1,6 +1,8 @@
 """
     基于概率论的分类⽅法：朴素⻉叶斯
 
+    对于分类⽽⾔，使⽤概率有时要⽐使⽤硬规则更为有效。⻉叶斯概率及⻉叶斯准则提供了⼀种利⽤已知值来估计未知概率的有效⽅法。
+
     将⽂档切分成词向量，然后利⽤词向量对⽂档进⾏分类
 
     朴素贝叶斯
@@ -14,6 +16,9 @@
 
     独⽴:
         统计意义上的独⽴，即⼀个特征或者单词出现的可能性与它和其他单词相邻没有关系
+    独⽴性假设:
+        是指⼀个词的出现概率并不依赖于⽂档中的其他词。
+
 
     朴素⻉叶斯的⼀般过程:
         1. 收集数据：可以使⽤任何⽅法。
@@ -22,10 +27,18 @@
         4. 训练算法：计算不同独⽴特征的条件概率。
         5. 测试算法：计算错误率。
         6. 使⽤算法：⼀个常⻅的朴素⻉叶斯应⽤是⽂档分类。可以在任意的分类场景中使⽤朴素⻉叶斯分类器，不⼀定⾮要是⽂本。
+
+
+    总结与改进:
+        1.下溢出问题,可以通过对概率取对数来解决
+        2.词袋模型在解决⽂档分类问题上⽐词集模型有所提⾼
+        3.其他⼀些⽅⾯的改进，⽐如说移除停⽤词，也可以花⼤量时间对切分器进⾏优化
 """
 import operator
 import random
 import re
+
+import feedparser
 import numpy as np
 
 
@@ -42,7 +55,7 @@ def loadDataSet():
     return postingList, classVec
 
 
-# 创建⼀个包含在所有⽂档中出现的不重复词的列表
+# 创建⼀个包含在所有⽂档中出现的不重复词的列表（去重）
 def createVocabList(dataSet):
     vocabSet = set([])
     for document in dataSet:
@@ -206,6 +219,7 @@ def calcMostFreq(vocabList, fullText):
         freqDict[token] = fullText.count(token)
     # 倒序排序
     sortedFreq = sorted(freqDict.items(), key=operator.itemgetter(1), reverse=True)
+    # 根据实际需求来更改需要去除的高频率词语
     return sortedFreq[:30]
 
 
@@ -217,20 +231,84 @@ def localWords(feed1, feed0):
     for i in range(minLen):
         # 每次访问一条RSS源
         wordList = textParse(feed1['entries'][i]['summary'])
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(1)
+        wordList = textParse(feed0['entries'][i]['summary'])
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(0)
+    # 去掉出现频率最高的词,频率高的词语大部分是无关内容的辅助性词语（停用词表）
+    vocabList = createVocabList(docList)
+    top_30_words = calcMostFreq(vocabList, fullText)
+    for pairW in top_30_words:
+        if pairW[0] in vocabList:
+            vocabList.reverse(pairW[0])
+    trainSet = list(range(2 * minLen))
+    testSet = []
+    for i in range(20):
+        randIndex = int(random.uniform(0, len(trainSet)))
+        testSet.append(trainSet[randIndex])
+        del (trainSet[randIndex])
+    trainMat = []
+    trainClass = []
+    for docIndex in trainSet:
+        trainMat.append(bagOfWordsToVec(vocabList, docList[docIndex]))
+        trainClass.append(classList[docIndex])
+    p0V, p1V, pSpam = trainNB0(np.array(trainMat), np.array(trainClass))
+    errorCount = 0
+    for docIndex in testSet:
+        wordVector = bagOfWordsToVec(vocabList, docList[docIndex])
+        if classifyNB(np.array(wordVector), p0V, p1V, pSpam) != classList[docIndex]:
+            errorCount += 1
+    print("error rate: " + str(float(errorCount) / len(testSet)))
+    return vocabList, p0V, p1V
+
+
+# 最具表征性的词汇显⽰函数
+# 该方法输出了大量的停用词,可见移除固定的停用词可以降低分类的错误率
+def getTopWord(ny, sf):
+    vocabList, p0V, p1V = localWords(ny, sf)
+    topNy = []
+    topSf = []
+    for i in range(len(p0V)):
+        # 返回⼤于某个阈值的所有词
+        if p0V[i] > -6.0:
+            topSf.append(vocabList[i], p0V[i])
+        if p1V[i] > -6.0:
+            topNy.append(vocabList[i], p1V[i])
+    # 按照条件概率进行排序
+    sortedSf = sorted(topSf, key=lambda pair: pair[1], reverse=True)
+    print("this is sf:")
+    for item in sortedSf:
+        print(item[0])
+    sortedNy = sorted(topNy, key=lambda pair: pair[1], reverse=True)
+    print("this is ny:")
+    for item in sortedNy:
+        print(item[0])
 
 
 if __name__ == "__main__":
-    # listPosts, listClass = loadDataSet()
-    # myVocabList = createVocabList(listPosts)+
-    # print(myVocabList)
-    # # print(setOfWordsToVec(myVocabList, listPosts[0]))
-    # trainMat = []
-    # for postInDoc in listPosts:
-    #     trainMat.append(setOfWordsToVec(myVocabList, postInDoc))
-    # print(trainMat)
-    # p0V, p1V, pAb = trainNB0(trainMat, listClass)
-    # print(p0V)
-    # print(p1V)
-    # print(pAb)
-    # testingNB()
-    spamTest()
+# listPosts, listClass = loadDataSet()
+# myVocabList = createVocabList(listPosts)+
+# print(myVocabList)
+# # print(setOfWordsToVec(myVocabList, listPosts[0]))
+# trainMat = []
+# for postInDoc in listPosts:
+#     trainMat.append(setOfWordsToVec(myVocabList, postInDoc))
+# print(trainMat)
+# p0V, p1V, pAb = trainNB0(trainMat, listClass)
+# print(p0V)
+# print(p1V)
+# print(pAb)
+# testingNB()
+# spamTest()
+# ny = feedparser.parse('http://www.nasa.gov/rss/dyn/image_of_the_day.rss')
+# 没有找到这个的替换RSS源
+# sf = feedparser.parse('')
+# print(ny)
+# print(sf)
+# vocabList, pSF, pNY = localWords(ny, sf)
+# print(vocabList)
+# print(pNY)
+# print(pSF)
