@@ -45,6 +45,7 @@ def calcShannonEnt(dataSet):
         shannonEnt -= prob * log(prob, 2)
     return shannonEnt
 
+
 def chooseBestFeatureToSplit(dataSet):
     numFeatures = len(dataSet[0]) - 1
     baseEntropy = calcShannonEnt(dataSet)
