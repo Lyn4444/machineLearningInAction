@@ -23,6 +23,8 @@
         5. 测试算法：计算错误率。
         6. 使⽤算法：⼀个常⻅的朴素⻉叶斯应⽤是⽂档分类。可以在任意的分类场景中使⽤朴素⻉叶斯分类器，不⼀定⾮要是⽂本。
 """
+import re
+
 import numpy as np
 
 
@@ -48,6 +50,7 @@ def createVocabList(dataSet):
     return list(vocabSet)
 
 
+# 词集模型（每个词的出现与否作为一个特征）
 def setOfWordsToVec(vocabList, inputSet):
     # 创建一个其中含有元素为0的向量
     returnVec = [0] * len(vocabList)
@@ -117,6 +120,36 @@ def testingNB():
     print(str(testEntry) + ' classified as: ' + str(classifyNB(thisDoc, p0V, p1V, pAb)))
 
 
+# 词袋模型（一个词在文档中出现不止一次，这能意味着包含该词是否出现在文档中所不能表达的某种信息）
+def bagOfWordsToVec(vocabList, inputSet):
+    returnVec = len([0] * vocabList)
+    for word in inputSet:
+        if word in vocabList:
+            returnVec[vocabList[word]] += 1
+    return returnVec
+
+
+# 使⽤朴素⻉叶斯对电⼦邮件进⾏分类
+# 1. 收集数据：提供⽂本⽂件。
+# 2. 准备数据：将⽂本⽂件解析成词条向量
+# 3. 分析数据：检查词条确保解析的正确性
+# 4. 训练算法：使⽤我们之前建⽴的trainNB()函数
+# 5. 测试算法：使⽤classifyNB()，并且构建⼀个新的测试函数来计算⽂档集的错误率。
+# 6. 使⽤算法：构建⼀个完整的程序对⼀组⽂档进⾏分类，将错分的⽂档输出到屏幕上。
+
+def textParse(bigString):
+    listOfTokens = re.split(r'\W *', bigString)
+    return [tok.lower() for tok in listOfTokens if len(tok) > 2]
+
+def spamTest():
+    docList = []
+    classList = []
+    fullText = []
+    for i in range(1, 26):
+        # 导⼊并解析⽂本⽂件
+        wordList = textParse()
+
+
 if __name__ == "__main__":
     # listPosts, listClass = loadDataSet()
     # myVocabList = createVocabList(listPosts)+
@@ -130,4 +163,7 @@ if __name__ == "__main__":
     # print(p0V)
     # print(p1V)
     # print(pAb)
-    testingNB()
+    # testingNB()
+
+    mySent = 'This book is the best book on Python or M.L. I have ever laid eyes upon.'
+
