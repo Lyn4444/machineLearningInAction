@@ -18,6 +18,9 @@
 """
 import math
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 # 基于最优化⽅法的最佳回归系数确定
 # （1）梯度上升法：要找到某函数的最⼤值，最好的⽅法是沿着该函数的梯度⽅向探寻，梯度算⼦总是指向函数值增⻓最快的⽅向。这⾥所说的是移动⽅向，⽽未提到移动量的⼤⼩。该量值称为步⻓，记做alpha
@@ -29,13 +32,73 @@ def loadDataSet():
     for line in file.readlines():
         lineArray = line.strip().split()
         dataMat.append([1.0, float(lineArray[0]), float(lineArray[1])])
-        labelMat.append(lineArray[2])
+        labelMat.append(int(lineArray[2]))
     return dataMat, labelMat
 
 
 # Sigmoid函数（阶越函数）
 # f(Z) = 1 / (1 + e^(-z))
 def sigmoid(inX):
-    return 1.0 / (1 + math.exp(-inX))
+    return 1.0 / (1 + np.exp(-inX))
 
 
+# 梯度上升法
+# sigmoid函数的输入z：z = W^T * x(W^T为回归系数矩阵的转置)
+# W = W + alpha * f(W)的梯度
+def gradAscend(dataMatIn, classLabels):
+    # 转换为NumPy矩阵数据类型
+    dataMat = np.mat(dataMatIn)
+    # transpose： 矩阵转置
+    labelsMat = np.mat(classLabels).transpose()
+    m, n = np.shape(dataMat)
+    # 步长
+    alpha = 0.001
+    # 最大迭代次数
+    maxCycles = 500
+    # 回归系数
+    weights = np.ones((n, 1))
+    for k in range(maxCycles):
+        h = sigmoid(dataMat * weights)
+        error = (labelsMat - h)
+        weights = weights + alpha * dataMat.transpose() * error
+    return weights
+
+
+# 画出数据集和logistic回归最佳拟合直线的函数
+def plotBestFit(weight):
+    # getA(): 将矩阵转成数组的形式
+    weights = weight.getA()
+    dataMat, labelMat = loadDataSet()
+    dataArray = np.array(dataMat)
+    n = np.shape(dataArray)[0]
+    xCord1 = []
+    yCord1 = []
+    xCord2 = []
+    yCord2 = []
+    for i in range(n):
+        if int(labelMat[i]) == 1:
+            xCord1.append(dataArray[i, 1])
+            yCord1.append(dataArray[i, 2])
+        else:
+            xCord2.append(dataArray[i, 1])
+            yCord2.append(dataArray[i, 2])
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.scatter(xCord1, yCord1, s=30, c='red', marker='s')
+    ax.scatter(xCord2, yCord2, s=30, c='green')
+    x = np.arange(-3.0, 3.0, 0.1)
+    # 最佳拟合直线
+    y = (-weights[0] - weights[1] * x) / weights[2]
+    ax.plot(x, y)
+    plt.xlabel('X1')
+    plt.ylabel('X2')
+    plt.show()
+
+
+if __name__ == "__main__":
+    dataArr, labelsMat = loadDataSet()
+    weight = gradAscend(dataArr, labelsMat)
+    # print(dataArr)
+    # print(labelsMat)
+    print(weight.getA())
+    plotBestFit(weight)
