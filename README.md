@@ -7,5 +7,6 @@ the code of machine Learning In Action
 ### ch2 Decision Tree(shannonEntropy)
 ### ch3 Bayes
 ### ch4 Logistic
+### ch5 SVMMLiA
 
 
