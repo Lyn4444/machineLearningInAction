@@ -122,9 +122,20 @@ def smoSimple(dataMat, classLabels, C, toleration, maxIter):
     return b, alpha
 
 
+# Platt SMO算法
+# 通过⼀个外循环来选择第⼀个alpha值的，其选择过程会在两种⽅式之间进⾏交替：
+#   1.在所有数据集上进⾏单遍扫描
+#   2.在⾮边界alpha中实现单遍扫描
+# 通过⼀个内循环来选择第⼆个alpha值
+# 通过最⼤化步⻓的⽅式来获得第⼆个alpha值，建⽴⼀个全局的缓存⽤于保存误差值，并从中选择使得步⻓或者说Ei-Ej最⼤的alpha值
+
 if __name__ == '__main__':
     dataArr, labelArr = loadDataSet('testSet.txt')
     print(labelArr)
     b, alpha = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     print(b)
     print(alpha[alpha > 0])
+    print(np.shape(alpha[alpha > 0]))
+    for i in range(100):
+        if alpha[i] > 0.0:
+            print(dataArr[i], labelArr[i])
