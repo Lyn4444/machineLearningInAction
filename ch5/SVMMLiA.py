@@ -129,6 +129,105 @@ def smoSimple(dataMat, classLabels, C, toleration, maxIter):
 # 通过⼀个内循环来选择第⼆个alpha值
 # 通过最⼤化步⻓的⽅式来获得第⼆个alpha值，建⽴⼀个全局的缓存⽤于保存误差值，并从中选择使得步⻓或者说Ei-Ej最⼤的alpha值
 
+# 通过建立数据结构来存储缓存过程中的重要值
+class optStruct:
+    def __init__(self, dataMatIn, classLabels, C, toleration):
+        self.X = dataMatIn
+        self.labelMat = classLabels
+        self.C = C
+        self.toleration = toleration
+        self.m = np.shape(dataMatIn)[0]
+        self.alpha = np.mat(np.zeros((self.m, 1)))
+        self.b = 0
+        # 设置缓存, 第⼀列给出的是Cache是否有效的标志位，⽽第⼆列给出的是实际的E值
+        self.cache = np.mat(np.zeros(self.m, 2))
+
+
+# 计算期望
+def calcEk(oS, k):
+    Fk = float(np.multiply(oS.alpha, oS.labelMat).T * (oS.X * oS.X[k, :].T)) + oS.b
+    Ek = Fk - float(oS.labelMat[k])
+    return Ek
+
+
+# 选第二个alpha
+def selectJ(i, oS, Ei):
+    # 内循环中的启发式⽅法
+    maxK = -1
+    maxDeltaE = 0
+    Ej = 0
+    oS.cache[i] = [1, Ei]
+    # 矩阵转换成array数组
+    valCacheList = np.nonzero(oS.cache[:, 0].A)[0]
+    if len(valCacheList) > 1:
+        for k in valCacheList:
+            if k == i:
+                continue
+            Ek = calcEk(oS, k)
+            deltaE = abs(Ei - Ek)
+            # 最大步长法
+            if deltaE > maxDeltaE:
+                maxK = k
+                maxDeltaE = deltaE
+                Ej = Ek
+        return maxK, Ej
+    else:
+        j = selectJ(i, oS.m)
+        Ej = calcEk(oS, j)
+    return j, Ej
+
+
+# 更新缓存
+def updateEk(oS, k):
+    Ek = calcEk(oS, k)
+    oS.cache[k] = [1, Ek]
+
+
+# Platt SMO算法中的优化例程(寻找决策边界)
+def inner(i, oS):
+    Ei = calcEk(oS, i)
+    if (oS.labelMat[i] * Ei < -oS.toleration and oS.alpha[i] < oS.C) or (
+            oS.labelMat[i] * Ei > oS.toleration and oS.alpha[i] > 0):
+        j, Ej = selectJ(i, oS, Ei)
+        alphaI = oS.alpha[i].copy()
+        alphaJ = oS.alpha[j].copy()
+        if oS.labelMat[i] != oS.labelMat[j]:
+            L = max(0, oS.alpha[j] - oS.alpha[i])
+            H = min(oS.C, oS.alpha[j] - oS.alpha[i] + oS.C)
+        else:
+            L = max(0, oS.alpha[j] + oS.alpha[i] - oS.C)
+            H = min(oS.C, oS.alpha[j] + oS.alpha[i])
+        if L == H:
+            print("L = H")
+            return 0
+        eta = 2.0 * oS.X[i, :] * oS.X[j, :].T - oS.X[i, :] * oS.X[i, :].T - oS.X[j, :] * oS.X[j, :].T
+        if eta >= 0:
+            print("eta >= 0")
+            return 0
+        oS.alpha[j] -= oS.labelMat[j] * (Ei - Ej) / eta
+        oS.alpha[j] = clipAlpha(oS.alpha[j], H, L)
+        # 更新误差缓存值
+        updateEk(oS, j)
+        if abs(oS.alpha[j] - alphaJ) < 0.00001:
+            print("alpha j not moving enough")
+            return 0
+        oS.alpha[i] += oS.labelMat[j] * oS.labelMat[i] * (alphaJ - oS.alpha[j])
+        updateEk(oS, i)
+        b1 = oS.b - Ei - oS.labelMat[i] * (oS.alpha[i] - alphaI) * oS.X[i, :] * oS.X[i, :].T - oS.labelMat[j] * (
+                    oS.alpha[j] - alphaJ) * oS.X[i, :] * oS.X[j, :].T
+        b2 = oS.b - Ej - oS.labelMat[i] * (oS.alpha[i] - alphaI) * oS.X[i, :] * oS.X[j, :].T - oS.labelMat[j] * (
+                    oS.alpha[j] - alphaJ) * oS.X[j, :] * oS.X[j, :].T
+        if 0 < oS.alpha[i] < oS.C:
+            oS.b = b1
+        elif 0 < oS.alpha[j] < oS.C:
+            oS.b = b2
+        else:
+            oS.b = (b1 + b2) / 2.0
+            return 1
+    else:
+        return 0
+
+
 if __name__ == '__main__':
     dataArr, labelArr = loadDataSet('testSet.txt')
     print(labelArr)
