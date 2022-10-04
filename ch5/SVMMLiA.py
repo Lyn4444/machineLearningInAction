@@ -228,6 +228,15 @@ def inner(i, oS):
         return 0
 
 
+def plattSMO(dataMatIn, classLabels, C, toleration, maxIter, kTup=None):
+    if kTup is None:
+        kTup = {'lin', 0}
+    oS = optStruct(np.mat(dataMatIn), np.mat(classLabels).transpose(), C, toleration)
+    iter = 0
+    entireSet = True
+    alphaPairsChanged = 0
+
+
 if __name__ == '__main__':
     dataArr, labelArr = loadDataSet('testSet.txt')
     print(labelArr)
