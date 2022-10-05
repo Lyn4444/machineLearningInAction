@@ -214,9 +214,9 @@ def inner(i, oS):
         oS.alpha[i] += oS.labelMat[j] * oS.labelMat[i] * (alphaJ - oS.alpha[j])
         updateEk(oS, i)
         b1 = oS.b - Ei - oS.labelMat[i] * (oS.alpha[i] - alphaI) * oS.X[i, :] * oS.X[i, :].T - oS.labelMat[j] * (
-                    oS.alpha[j] - alphaJ) * oS.X[i, :] * oS.X[j, :].T
+                oS.alpha[j] - alphaJ) * oS.X[i, :] * oS.X[j, :].T
         b2 = oS.b - Ej - oS.labelMat[i] * (oS.alpha[i] - alphaI) * oS.X[i, :] * oS.X[j, :].T - oS.labelMat[j] * (
-                    oS.alpha[j] - alphaJ) * oS.X[j, :] * oS.X[j, :].T
+                oS.alpha[j] - alphaJ) * oS.X[j, :] * oS.X[j, :].T
         if 0 < oS.alpha[i] < oS.C:
             oS.b = b1
         elif 0 < oS.alpha[j] < oS.C:
@@ -228,6 +228,7 @@ def inner(i, oS):
         return 0
 
 
+# 完整的Platt SMO算法外循环代码
 def plattSMO(dataMatIn, classLabels, C, toleration, maxIter, kTup=None):
     if kTup is None:
         kTup = {'lin', 0}
@@ -235,6 +236,26 @@ def plattSMO(dataMatIn, classLabels, C, toleration, maxIter, kTup=None):
     iter = 0
     entireSet = True
     alphaPairsChanged = 0
+    while iter < maxIter and (alphaPairsChanged > 0 or entireSet):
+        alphaPairsChanged = 0
+        if entireSet:
+            # 遍历所有值
+            for i in range(oS.m):
+                alphaPairsChanged += inner(i, oS)
+                print("fullSet iter: %d    i: %d,  pairs changed  %d " % (iter, i, alphaPairsChanged))
+                iter += 1
+            else:
+                nonBoundIs = np.nonzero((oS.alpha.A > 0) * (oS.alpha.A < C))[0]
+                for i in nonBoundIs:
+                    alphaPairsChanged += inner(i, oS)
+                    print("nonBound iter: %d    i: %d,  pairs changed  %d " % (iter, i, alphaPairsChanged))
+                    iter += 1
+                if entireSet:
+                    entireSet = False
+                elif alphaPairsChanged == 0:
+                    entireSet = True
+                print("iteration number: %d" % iter)
+            return oS.b, oS.alpha
 
 
 if __name__ == '__main__':
