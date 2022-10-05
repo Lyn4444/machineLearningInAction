@@ -180,7 +180,6 @@ def selectJ(i, oS, Ei):
 # 更新缓存
 def updateEk(oS, k):
     Ek = calcEk(oS, k)
-    print(Ek)
     oS.cache[k] = [1, Ek]
 
 
@@ -259,6 +258,17 @@ def plattSMO(dataMatIn, classLabels, C, toleration, maxIter, kTup=None):
     return oS.b, oS.alpha
 
 
+def calcWs(alpha, dataArr, classLabels):
+    X = np.mat(dataArr)
+    labelMat = np.mat(classLabels).transpose()
+    m, n = np.shape(X)
+    w = np.zeros((n, 1))
+    for i in range(m):
+        # 遍历了所有数据，但是除了支持向量外的其他数据点都被舍弃
+        w += np.multiply(alpha[i] * labelMat[i], X[i, :].T)
+    return w
+
+
 if __name__ == '__main__':
     dataArr, labelArr = loadDataSet('testSet.txt')
     # print(labelArr)
@@ -270,3 +280,9 @@ if __name__ == '__main__':
     #     if alpha[i] > 0.0:
     #         print(dataArr[i], labelArr[i])
     b, alpha = plattSMO(dataArr, labelArr, 0.6, 0.001, 40)
+    w = calcWs(alpha, dataArr, labelArr)
+    print(w)
+    dataMat = np.mat(dataArr)
+    # 如果值大于0，属于1类， 否则就是-1类
+    print(str(dataMat[2] * np.mat(w) + b))
+    print(labelArr[2])
