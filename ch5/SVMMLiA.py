@@ -140,7 +140,7 @@ class optStruct:
         self.alpha = np.mat(np.zeros((self.m, 1)))
         self.b = 0
         # 设置缓存, 第⼀列给出的是Cache是否有效的标志位，⽽第⼆列给出的是实际的E值
-        self.cache = np.mat(np.zeros(self.m, 2))
+        self.cache = np.mat(np.zeros((self.m, 2)))
 
 
 # 计算期望
@@ -172,7 +172,7 @@ def selectJ(i, oS, Ei):
                 Ej = Ek
         return maxK, Ej
     else:
-        j = selectJ(i, oS.m)
+        j = selectOthersAlpha(i, oS.m)
         Ej = calcEk(oS, j)
     return j, Ej
 
@@ -180,6 +180,7 @@ def selectJ(i, oS, Ei):
 # 更新缓存
 def updateEk(oS, k):
     Ek = calcEk(oS, k)
+    print(Ek)
     oS.cache[k] = [1, Ek]
 
 
@@ -223,7 +224,7 @@ def inner(i, oS):
             oS.b = b2
         else:
             oS.b = (b1 + b2) / 2.0
-            return 1
+        return 1
     else:
         return 0
 
@@ -231,7 +232,7 @@ def inner(i, oS):
 # 完整的Platt SMO算法外循环代码
 def plattSMO(dataMatIn, classLabels, C, toleration, maxIter, kTup=None):
     if kTup is None:
-        kTup = {'lin', 0}
+        kTup = ('lin', 0)
     oS = optStruct(np.mat(dataMatIn), np.mat(classLabels).transpose(), C, toleration)
     iter = 0
     entireSet = True
@@ -243,28 +244,29 @@ def plattSMO(dataMatIn, classLabels, C, toleration, maxIter, kTup=None):
             for i in range(oS.m):
                 alphaPairsChanged += inner(i, oS)
                 print("fullSet iter: %d    i: %d,  pairs changed  %d " % (iter, i, alphaPairsChanged))
-                iter += 1
-            else:
-                nonBoundIs = np.nonzero((oS.alpha.A > 0) * (oS.alpha.A < C))[0]
-                for i in nonBoundIs:
-                    alphaPairsChanged += inner(i, oS)
-                    print("nonBound iter: %d    i: %d,  pairs changed  %d " % (iter, i, alphaPairsChanged))
-                    iter += 1
-                if entireSet:
-                    entireSet = False
-                elif alphaPairsChanged == 0:
-                    entireSet = True
-                print("iteration number: %d" % iter)
-            return oS.b, oS.alpha
+            iter += 1
+        else:
+            nonBoundIs = np.nonzero((oS.alpha.A > 0) * (oS.alpha.A < C))[0]
+            for i in nonBoundIs:
+                alphaPairsChanged += inner(i, oS)
+                print("nonBound iter: %d    i: %d,  pairs changed  %d " % (iter, i, alphaPairsChanged))
+            iter += 1
+        if entireSet:
+            entireSet = False
+        elif alphaPairsChanged == 0:
+            entireSet = True
+        print("iteration number: %d" % iter)
+    return oS.b, oS.alpha
 
 
 if __name__ == '__main__':
     dataArr, labelArr = loadDataSet('testSet.txt')
-    print(labelArr)
-    b, alpha = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
-    print(b)
-    print(alpha[alpha > 0])
-    print(np.shape(alpha[alpha > 0]))
-    for i in range(100):
-        if alpha[i] > 0.0:
-            print(dataArr[i], labelArr[i])
+    # print(labelArr)
+    # b, alpha = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
+    # print(b)
+    # print(alpha[alpha > 0])
+    # print(np.shape(alpha[alpha > 0]))
+    # for i in range(100):
+    #     if alpha[i] > 0.0:
+    #         print(dataArr[i], labelArr[i])
+    b, alpha = plattSMO(dataArr, labelArr, 0.6, 0.001, 40)
