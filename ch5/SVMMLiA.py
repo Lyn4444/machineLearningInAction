@@ -269,6 +269,21 @@ def calcWs(alpha, dataArr, classLabels):
     return w
 
 
+def kernelTrans(X, A, kTup):
+    m, n = np.shape(X)
+    K = np.mat(np.zeros((m, 1)))
+    if kTup[0] == 'lin':
+        K = X * A.T
+    elif kTup[0] == 'rbf':
+        for i in range(m):
+            delta = X[i, :] - A
+            K[i] = delta * delta
+        K = np.exp(K / (-1 * kTup[1] ** 2))
+    else:
+        raise NameError('Houston problem: Kernel is not recognized')
+    return K
+
+
 if __name__ == '__main__':
     dataArr, labelArr = loadDataSet('testSet.txt')
     # print(labelArr)
